@@ -271,6 +271,12 @@ export const strings = {
     ],
   },
 
+  portfolio: {
+    title: 'More projects by Alvee',
+    body: 'Explore other apps, tools and experiments I have built.',
+    action: 'Visit portfolio',
+  },
+
   common: {
     close: 'Close',
     done: 'Done',
@@ -287,6 +293,7 @@ export const strings = {
     off: 'Off',
     search: 'Search',
     more: 'More options',
+    opensInNewTab: '(opens in a new tab)',
   },
 
   a11y: {

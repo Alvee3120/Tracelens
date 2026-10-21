@@ -4,14 +4,16 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FolderOpen, Play, Settings as SettingsIcon, Upload } from 'lucide-react';
+import { FolderOpen, Play, Settings as SettingsIcon, Sparkles, Upload } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { strings } from '@/lib/strings';
+import { PORTFOLIO_URL } from '@/lib/links';
 import { getImage, loadSession } from '@/db/db';
 import { useImageImport, type ImportTarget } from '@/lib/useImageImport';
 import { useRecents } from '@/lib/useRecents';
 import { useTraceStore } from '@/store/useTraceStore';
 import { Button } from '@/components/ui/Button';
+import { ExternalLink } from '@/components/ui/ExternalLink';
 import { IconButton } from '@/components/ui/IconButton';
 import { SampleGallery } from '@/components/home/SampleGallery';
 import { RecentImages } from '@/components/home/RecentImages';
@@ -210,6 +212,26 @@ export default function Home() {
 
       <section className="mt-8">
         <InstallCard />
+      </section>
+
+      <section className="mt-8" aria-labelledby="portfolio-heading">
+        <div className="rounded-2.5xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-accent/15 text-accent-strong">
+              <Sparkles size={20} aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <h2 id="portfolio-heading" className="text-sm font-semibold text-primary">
+                {strings.portfolio.title}
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-muted">{strings.portfolio.body}</p>
+            </div>
+          </div>
+
+          <ExternalLink className="mt-3" href={PORTFOLIO_URL} variant="primary" size="sm">
+            {strings.portfolio.action}
+          </ExternalLink>
+        </div>
       </section>
     </main>
   );

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { strings, format } from '@/lib/strings';
+import { PORTFOLIO_URL } from '@/lib/links';
 import { getCapabilityReport, hasMediaDevices, type BrowserName } from '@/lib/capabilities';
 import { formatBytes } from '@/lib/imageUtils';
 import { haptics } from '@/lib/haptics';
@@ -31,6 +32,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Switch } from '@/components/ui/Switch';
 import { Slider } from '@/components/ui/Slider';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { ExternalLink } from '@/components/ui/ExternalLink';
 import { InstallCard } from '@/components/home/InstallCard';
 
 const APP_VERSION = '1.0.0';
@@ -381,6 +383,13 @@ export default function Settings() {
               </p>
               <p className="mt-1">{strings.settings.privacy}</p>
             </div>
+          </div>
+
+          <div className="border-t border-white/10 pt-3">
+            <p className="mb-2 text-xs leading-relaxed text-muted">{strings.portfolio.body}</p>
+            <ExternalLink href={PORTFOLIO_URL} variant="secondary" size="sm">
+              {strings.portfolio.action}
+            </ExternalLink>
           </div>
         </Section>
       </div>
