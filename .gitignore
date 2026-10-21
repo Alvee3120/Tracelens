@@ -1,0 +1,29 @@
+node_modules
+dist
+dist-ssr
+dev-dist
+*.local
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Test output
+coverage
+playwright-report
+test-results
+.vitest
+*.tsbuildinfo
+
+# Certificates from vite-plugin-mkcert
+certs

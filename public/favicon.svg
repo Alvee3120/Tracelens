@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="TraceLens">
+  <rect width="512" height="512" rx="112" fill="#0b0b0f"/>
+  <rect x="26" y="26" width="460" height="460" rx="112" fill="#111118"/>
+  <rect x="176" y="128" width="160" height="248" rx="16" fill="#f1f5f9" opacity="0.92"/>
+  <path d="M212 300 L246 196 L292 268" fill="none" stroke="#0f766e" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#5eead4" stroke-width="26"/>
+  <path d="M300 300 L344 388 L300 372 Z" fill="#5eead4"/>
+</svg>
