@@ -1,44 +1,33 @@
 /**
- * Live camera preview.
+ * Live camera preview surface.
  *
- * Only presents the surface: the MediaStream is attached by effect, and taps are
- * handled by the overlay gesture layer (which sits above the preview) so that
- * tap-to-focus and overlay dragging never fight over pointer events.
+ * Only presents the video. Everything interactive lives elsewhere: taps are
+ * handled by the overlay gesture layer (which sits above the preview, so
+ * tap-to-focus and overlay dragging never fight for pointer events), and the
+ * "camera unavailable" card is owned by the Trace screen so it can never
+ * collide with the bottom control bar.
  */
 import { useEffect, useRef } from 'react';
-import { CameraOff, RefreshCw } from 'lucide-react';
 import type { MutableRefObject } from 'react';
 import { cn } from '@/lib/cn';
 import { strings } from '@/lib/strings';
-import { bodyFor, isAppError } from '@/lib/errors';
-import type { AppError, CameraStatus } from '@/types';
-import { Button } from '@/components/ui/Button';
 
 export interface CameraViewProps {
   stream: MediaStream | null;
-  status: CameraStatus;
-  error: AppError | null;
   mirror: boolean;
   brightness: number;
   contrast: number;
   /** Owned by the parent so tap-to-focus can map through the same element. */
   videoRef?: MutableRefObject<HTMLVideoElement | null>;
-  onRetry: () => void;
-  /** Rendered instead of the preview when the camera is unavailable. */
-  fallback?: React.ReactNode;
   className?: string;
 }
 
 export function CameraView({
   stream,
-  status,
-  error,
   mirror,
   brightness,
   contrast,
   videoRef: externalVideoRef,
-  onRetry,
-  fallback,
   className,
 }: CameraViewProps) {
   const internalRef = useRef<HTMLVideoElement | null>(null);
@@ -68,8 +57,6 @@ export function CameraView({
     };
   }, [videoRef]);
 
-  const showFallback = stream === null;
-
   return (
     <div className={cn('absolute inset-0 overflow-hidden bg-black', className)}>
       <video
@@ -87,34 +74,10 @@ export function CameraView({
         aria-label={strings.a11y.cameraPreview}
       />
 
-      {showFallback ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-ink-900/95 px-6">
-          {fallback ?? (
-            <div className="w-full max-w-sm text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-                <CameraOff size={24} aria-hidden="true" />
-              </div>
-              <h2 className="text-lg font-semibold">
-                {error && isAppError(error) ? error.message : strings.camera.off}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
-                {error && isAppError(error) ? bodyFor(error.code) : strings.camera.start}
-              </p>
-              {status !== 'requesting' ? (
-                <Button
-                  className="mt-5"
-                  variant="primary"
-                  onClick={onRetry}
-                  leadingIcon={<RefreshCw size={18} aria-hidden="true" />}
-                >
-                  {strings.onboarding.tryAgain}
-                </Button>
-              ) : (
-                <p className="mt-5 text-sm text-muted">{strings.camera.starting}</p>
-              )}
-            </div>
-          )}
-        </div>
+      {/* Opaque backdrop while there is no feed; the Trace screen layers the
+          explanatory card on top of it. */}
+      {stream === null ? (
+        <div aria-hidden="true" className="absolute inset-0 bg-ink-900/95" />
       ) : null}
     </div>
   );

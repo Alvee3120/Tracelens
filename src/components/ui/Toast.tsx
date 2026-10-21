@@ -34,10 +34,11 @@ export function Toast() {
   const Icon = ICONS[toast.variant];
 
   return (
+    // Sits below the app's top bar so it never blocks the controls.
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex justify-center px-4 pt-[max(env(safe-area-inset-top),0.75rem)]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex justify-center px-4 pt-[calc(max(env(safe-area-inset-top),0.75rem)_+_4.75rem)]"
     >
       <div
         className={cn(

@@ -5,6 +5,11 @@ const config: Config = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      screens: {
+        // Phones in landscape are very short: the chrome has to shrink and
+        // notices must become overlays so nothing gets covered.
+        short: { raw: '(max-height: 560px)' },
+      },
       colors: {
         // Surfaces are driven by CSS variables so the same utility class renders
         // dark by default and light when the `dark` class is absent.

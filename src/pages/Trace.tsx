@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  Camera,
   Grid3x3,
   ImagePlus,
   Minimize2,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { helpStepsForBrowser, strings } from '@/lib/strings';
+import { bodyFor } from '@/lib/errors';
 import { getCapabilityReport, supportsFullscreen } from '@/lib/capabilities';
 import { getOverlayController } from '@/lib/overlayController';
 import { useWakeLock } from '@/lib/useWakeLock';
@@ -421,18 +423,25 @@ export default function Trace() {
 
   const timerText = timerEnabled ? formatDuration(elapsed) : null;
 
-  const cameraFallback = camera.status === 'idle' ? (
-    <div className="w-full max-w-sm text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-        <ImagePlus size={24} aria-hidden="true" />
-      </div>
-      <h2 className="text-lg font-semibold">{strings.camera.off}</h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">{strings.onboarding.steps[0].body}</p>
-      <Button className="mt-5" variant="primary" onClick={() => setCameraEnabled(true)}>
-        {strings.onboarding.startCamera}
-      </Button>
-    </div>
-  ) : undefined;
+  const cameraDown = camera.stream === null;
+  const cameraStarting = camera.status === 'requesting';
+  const showEmptyState = !imageId && !immersive;
+  // With an image loaded the bottom control bar is on screen, so the camera
+  // notice is anchored under the top bar rather than the centre — otherwise the
+  // bar covers the buttons on short/landscape viewports.
+  const showCameraNotice = imageId !== null && cameraDown && !immersive;
+
+  /** Starts the camera whether it was never enabled or the track just died. */
+  const retryCameraRef = useRef(camera.retry);
+  retryCameraRef.current = camera.retry;
+
+  const handleStartCamera = useCallback(() => {
+    if (!cameraEnabled) {
+      setCameraEnabled(true);
+      return;
+    }
+    void retryCameraRef.current();
+  }, [cameraEnabled]);
 
   return (
     <div
@@ -446,14 +455,10 @@ export default function Trace() {
     >
       <CameraView
         stream={camera.stream}
-        status={camera.status}
-        error={camera.error}
         mirror={mirrorCamera}
         brightness={brightness}
         contrast={boostContrast}
         videoRef={videoRef}
-        onRetry={() => setCameraEnabled(true)}
-        fallback={cameraFallback}
       />
 
       <OverlayLayer
@@ -517,14 +522,26 @@ export default function Trace() {
       ) : null}
 
       {/* ------------------------------------------------------------- empty state */}
-      {!imageId && !immersive ? (
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 justify-center px-6">
-          <div className="pointer-events-auto w-full max-w-sm rounded-3xl border border-white/10 bg-ink-900/85 p-5 text-center backdrop-blur-xl">
+      {showEmptyState ? (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-6 pb-4 pt-[max(env(safe-area-inset-top),5rem)] short:pb-4 short:pt-[7.5rem]">
+          <div className="pointer-events-auto max-h-full w-full max-w-sm overflow-y-auto rounded-3xl border border-white/10 bg-ink-900/90 p-5 text-center backdrop-blur-xl">
             <h2 className="text-base font-semibold text-primary">{strings.trace.noImage}</h2>
-            <p className="mt-1.5 text-sm text-muted">{strings.trace.noImageBody}</p>
+            <p className="mt-1.5 text-sm text-muted">
+              {cameraDown ? strings.camera.startHint : strings.trace.noImageBody}
+            </p>
             <div className="mt-4 flex flex-col gap-2">
+              {cameraDown && !cameraStarting ? (
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={handleStartCamera}
+                  leadingIcon={<Camera size={18} aria-hidden="true" />}
+                >
+                  {strings.onboarding.startCamera}
+                </Button>
+              ) : null}
               <Button
-                variant="primary"
+                variant={cameraDown ? 'secondary' : 'primary'}
                 fullWidth
                 onClick={() => setPickerOpen(true)}
                 leadingIcon={<ImagePlus size={18} aria-hidden="true" />}
@@ -540,6 +557,52 @@ export default function Trace() {
                 {strings.home.pickFromGallery}
               </Button>
             </div>
+            {cameraStarting ? (
+              <p className="mt-3 text-xs text-muted">{strings.camera.starting}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {/* -------------------------------------------------- camera needs attention */}
+      {showCameraNotice ? (
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-start justify-center px-4 pt-[max(env(safe-area-inset-top),4.5rem)] short:pointer-events-auto short:items-center short:bg-black/55 short:pt-0">
+          <div className="pointer-events-auto h-fit w-full max-w-md rounded-2xl border border-white/10 bg-ink-900/90 p-4 backdrop-blur-xl">
+            <h2 className="text-sm font-semibold text-primary">
+              {camera.error ? camera.error.message : strings.camera.off}
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              {camera.error ? bodyFor(camera.error.code) : strings.camera.startHint}
+            </p>
+            {camera.trackedEnded ? (
+              <p className="mt-1 text-xs leading-relaxed text-amber-200">
+                {strings.camera.deviceEnded}
+              </p>
+            ) : null}
+            {camera.error ? (
+              <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs leading-relaxed text-muted">
+                {helpSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={handleStartCamera}
+                leadingIcon={<Camera size={16} aria-hidden="true" />}
+              >
+                {camera.status === 'idle' || camera.trackedEnded
+                  ? strings.onboarding.startCamera
+                  : strings.onboarding.tryAgain}
+              </Button>
+              {camera.error ? (
+                <Button size="sm" variant="secondary" onClick={() => setCameraEnabled(false)}>
+                  {strings.onboarding.continueWithout}
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}
@@ -552,7 +615,7 @@ export default function Trace() {
       ) : null}
 
       {/* -------------------------------------------------------- status badges */}
-      {!immersive ? (
+      {!immersive && !showCameraNotice ? (
         <div className="pointer-events-none absolute left-3 top-[max(env(safe-area-inset-top),4.25rem)] z-20 flex flex-col items-start gap-1.5">
           {mode === 'outline' && outlineStatus.isProcessing ? (
             <span className="rounded-full border border-white/10 bg-black/50 px-2.5 py-1 text-[11px] text-white backdrop-blur">
@@ -569,40 +632,6 @@ export default function Trace() {
               {camera.resolution.width}×{camera.resolution.height}
             </span>
           ) : null}
-        </div>
-      ) : null}
-
-      {camera.trackedEnded ? (
-        <div className="absolute inset-x-0 bottom-40 z-30 flex justify-center px-4">
-          <button
-            type="button"
-            onClick={() => void camera.retry()}
-            className="min-h-12 rounded-2xl border border-amber-400/30 bg-amber-950/90 px-4 text-sm font-semibold text-amber-50 backdrop-blur focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            {strings.camera.deviceEnded}
-          </button>
-        </div>
-      ) : null}
-
-      {/* ------------------------------------------------------- camera errors */}
-      {camera.error && camera.status !== 'ready' && camera.status !== 'idle' && !immersive ? (
-        <div className="absolute inset-x-0 bottom-[12rem] z-30 mx-auto max-w-md px-4">
-          <div className="rounded-2xl border border-red-400/25 bg-ink-900/90 p-4 backdrop-blur-xl">
-            <h2 className="text-sm font-semibold text-primary">{camera.error.message}</h2>
-            <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs leading-relaxed text-muted">
-              {helpSteps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-            <div className="mt-3 flex gap-2">
-              <Button size="sm" variant="secondary" onClick={() => setCameraEnabled(false)}>
-                {strings.onboarding.continueWithout}
-              </Button>
-              <Button size="sm" variant="primary" onClick={() => void camera.retry()}>
-                {strings.onboarding.tryAgain}
-              </Button>
-            </div>
-          </div>
         </div>
       ) : null}
 

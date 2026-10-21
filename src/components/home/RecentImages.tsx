@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { strings } from '@/lib/strings';
 import type { StoredImage } from '@/types';
-import { useBlobUrls } from '@/lib/useBlobUrl';
+import { useBlobUrls, type BlobEntry } from '@/lib/useBlobUrls';
 
 export interface RecentImagesProps {
   recents: StoredImage[];
@@ -24,8 +24,8 @@ export function RecentImages({
   layout = 'row',
   className,
 }: RecentImagesProps) {
-  const blobs = recents.map((item) => item.blob);
-  const urls = useBlobUrls(blobs);
+  const entries: BlobEntry[] = recents.map((item) => ({ key: item.id, blob: item.blob }));
+  const urls = useBlobUrls(entries);
 
   if (isLoading) {
     return (

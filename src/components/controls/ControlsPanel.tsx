@@ -114,7 +114,9 @@ export function ControlsPanel({ onCommit, timerText, className }: ControlsPanelP
       <div className="px-4 pb-3 pt-2">
         <OpacitySlider onCommit={onCommit} />
 
-        <div className="mt-2 flex items-center gap-2">
+        {/* Mode chips are dropped on very short (landscape) viewports so the
+            panel never eats the whole screen. */}
+        <div className="mt-2 flex items-center gap-2 short:hidden">
           <ModeChips className="flex-1" />
         </div>
 

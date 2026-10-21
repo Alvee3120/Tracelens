@@ -51,6 +51,7 @@ export const strings = {
     live: 'Camera live',
     off: 'Camera off',
     start: 'Start camera',
+    startHint: 'Turn the camera on to see your paper behind the overlay.',
     stop: 'Stop camera',
     switchCamera: 'Switch camera',
     mirror: 'Mirror camera',
